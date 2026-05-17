@@ -563,6 +563,173 @@ function ModalObra({ obra, onClose, onUpdate, onDelete, equipe, perfil }) {
   );
 }
 
+
+// ─── TELA DE LOGIN ────────────────────────────────────────────────────────────
+// Admin: login gtdecoracoes / senha gt210514
+// Funcionários: escolhem o nome na lista / senha 12345
+
+const SENHA_ADMIN   = "gt210514";
+const LOGIN_ADMIN   = "gtdecoracoes";
+const SENHA_EQUIPE  = "12345";
+
+function TelaLogin({ onLogin, equipe }) {
+  const [modo, setModo]       = useState("escolha"); // "escolha" | "admin" | "equipe"
+  const [loginAdmin, setLoginAdmin] = useState("");
+  const [senha, setSenha]     = useState("");
+  const [nomeSel, setNomeSel] = useState("");
+  const [erro, setErro]       = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const equipeAtiva = equipe.filter(e => e.ativo && e.perfil !== "admin" && e.perfil !== "gestora");
+  const gestores    = equipe.filter(e => e.ativo && e.perfil === "gestora");
+
+  const entrarAdmin = () => {
+    setLoading(true); setErro("");
+    setTimeout(() => {
+      if (loginAdmin.trim().toLowerCase() === LOGIN_ADMIN && senha.trim() === SENHA_ADMIN) {
+        onLogin({ nome:"Gutemberg", perfil:"admin", cor:"#f97316" });
+      } else {
+        setErro("Login ou senha incorretos.");
+        setLoading(false);
+      }
+    }, 600);
+  };
+
+  const entrarEquipe = () => {
+    setLoading(true); setErro("");
+    setTimeout(() => {
+      if (!nomeSel) { setErro("Selecione seu nome."); setLoading(false); return; }
+      if (senha.trim() !== SENHA_EQUIPE) { setErro("Senha incorreta."); setLoading(false); return; }
+      const membro = equipe.find(e => e.nome === nomeSel);
+      if (membro) onLogin({ nome: membro.nome, perfil: membro.perfil, cor: membro.cor });
+    }, 600);
+  };
+
+  return (
+    <div style={{minHeight:"100vh",background:"#060f1e",display:"flex",alignItems:"center",
+      justifyContent:"center",padding:20,fontFamily:"'Sora','Nunito',sans-serif"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');*{box-sizing:border-box}input,select{outline:none}`}</style>
+      <div style={{width:"100%",maxWidth:360}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{width:64,height:64,borderRadius:16,background:"linear-gradient(135deg,#f97316,#ea580c)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:26,fontWeight:900,color:"#fff",margin:"0 auto 14px",
+            boxShadow:"0 8px 24px #f9731655"}}>GT</div>
+          <div style={{fontSize:22,fontWeight:800,color:"#f1f5f9"}}>GT Decorações</div>
+          <div style={{fontSize:12,color:"#64748b",letterSpacing:1,marginTop:2}}>GESTÃO DE OBRAS</div>
+        </div>
+
+        {/* TELA DE ESCOLHA */}
+        {modo==="escolha"&&(
+          <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,padding:28,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+            <div style={{fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:6}}>Quem é você?</div>
+            <div style={{fontSize:13,color:"#64748b",marginBottom:24}}>Escolha como deseja entrar</div>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <button onClick={()=>{setModo("admin");setErro("");setSenha("");}} style={{
+                background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:14,
+                color:"#fff",cursor:"pointer",padding:16,fontSize:14,fontWeight:800,
+                boxShadow:"0 4px 16px #f9731644",textAlign:"left",display:"flex",alignItems:"center",gap:12}}>
+                <span style={{fontSize:22}}>👑</span>
+                <div>
+                  <div>Sou o Dono / Gestora</div>
+                  <div style={{fontSize:11,opacity:0.8,fontWeight:400,marginTop:2}}>Acesso completo ao sistema</div>
+                </div>
+              </button>
+              <button onClick={()=>{setModo("equipe");setErro("");setSenha("");setNomeSel("");}} style={{
+                background:"#1e293b",border:"1px solid #334155",borderRadius:14,
+                color:"#e2e8f0",cursor:"pointer",padding:16,fontSize:14,fontWeight:700,
+                textAlign:"left",display:"flex",alignItems:"center",gap:12}}>
+                <span style={{fontSize:22}}>👷</span>
+                <div>
+                  <div>Sou Funcionário / Terceirizado</div>
+                  <div style={{fontSize:11,color:"#64748b",fontWeight:400,marginTop:2}}>Ver minhas obras do dia</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* LOGIN ADMIN */}
+        {modo==="admin"&&(
+          <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,padding:28,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+            <button onClick={()=>setModo("escolha")} style={{background:"transparent",border:"none",
+              color:"#64748b",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}}>← Voltar</button>
+            <div style={{fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:20}}>👑 Acesso Administrativo</div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Login</div>
+              <input value={loginAdmin} onChange={e=>setLoginAdmin(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&entrarAdmin()}
+                placeholder="gtdecoracoes" style={{width:"100%",background:"#1e293b",
+                  border:`1px solid ${erro?"#ef4444":"#334155"}`,borderRadius:10,
+                  color:"#e2e8f0",padding:"11px 14px",fontSize:14}}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Senha</div>
+              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&entrarAdmin()}
+                placeholder="••••••••" style={{width:"100%",background:"#1e293b",
+                  border:`1px solid ${erro?"#ef4444":"#334155"}`,borderRadius:10,
+                  color:"#e2e8f0",padding:"11px 14px",fontSize:14}}/>
+            </div>
+            {erro&&<div style={{background:"#7f1d1d",border:"1px solid #ef444433",borderRadius:10,
+              padding:"10px 14px",fontSize:13,color:"#fca5a5",marginBottom:16,textAlign:"center"}}>{erro}</div>}
+            <button onClick={entrarAdmin} disabled={loading} style={{width:"100%",
+              background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:12,
+              color:"#fff",cursor:"pointer",padding:14,fontSize:15,fontWeight:800,
+              opacity:loading?0.7:1}}>
+              {loading?"Verificando...":"Entrar →"}
+            </button>
+          </div>
+        )}
+
+        {/* LOGIN EQUIPE */}
+        {modo==="equipe"&&(
+          <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,padding:28,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+            <button onClick={()=>setModo("escolha")} style={{background:"transparent",border:"none",
+              color:"#64748b",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}}>← Voltar</button>
+            <div style={{fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:20}}>👷 Equipe</div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Seu Nome</div>
+              <select value={nomeSel} onChange={e=>setNomeSel(e.target.value)} style={{
+                width:"100%",background:"#1e293b",border:`1px solid ${erro?"#ef4444":"#334155"}`,
+                borderRadius:10,color:nomeSel?"#e2e8f0":"#64748b",padding:"11px 14px",fontSize:14}}>
+                <option value="">Selecione seu nome...</option>
+                {[...gestores,...equipeAtiva].map(e=>(
+                  <option key={e.id} value={e.nome}>{getP(e.perfil).icon} {e.nome} — {e.funcao}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Senha</div>
+              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&entrarEquipe()}
+                placeholder="••••••••" style={{width:"100%",background:"#1e293b",
+                  border:`1px solid ${erro?"#ef4444":"#334155"}`,borderRadius:10,
+                  color:"#e2e8f0",padding:"11px 14px",fontSize:14}}/>
+            </div>
+            {erro&&<div style={{background:"#7f1d1d",border:"1px solid #ef444433",borderRadius:10,
+              padding:"10px 14px",fontSize:13,color:"#fca5a5",marginBottom:16,textAlign:"center"}}>{erro}</div>}
+            <button onClick={entrarEquipe} disabled={loading} style={{width:"100%",
+              background:"#1e293b",border:"1px solid #f97316",borderRadius:12,
+              color:"#f97316",cursor:"pointer",padding:14,fontSize:15,fontWeight:800,
+              opacity:loading?0.7:1}}>
+              {loading?"Verificando...":"Entrar →"}
+            </button>
+          </div>
+        )}
+
+        <div style={{textAlign:"center",marginTop:20,fontSize:11,color:"#334155"}}>
+          GT Decorações · Sistema interno
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 function GTObras() {
   const [equipe,setEquipe]=useState(EQUIPE_INICIAL);
@@ -643,11 +810,14 @@ function GTObras() {
           </div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <select value={perfil} onChange={e=>{setPerfil(e.target.value);setAba("obras");}} style={{
-            background:"#1e293b",border:"1px solid #334155",borderRadius:8,
-            color:"#e2e8f0",padding:"6px 10px",fontSize:11,cursor:"pointer"}}>
-            {PERFIS.map(pr=><option key={pr.id} value={pr.id}>{pr.icon} {pr.label}</option>)}
-          </select>
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"#1e293b",
+            border:"1px solid #334155",borderRadius:8,padding:"5px 10px"}}>
+            <Av nome={usuarioLogado?.nome||"?"} cor={usuarioLogado?.cor} size={22}/>
+            <span style={{fontSize:11,color:"#e2e8f0",fontWeight:700}}>{usuarioLogado?.nome}</span>
+            <button onClick={()=>{setUsuarioLogado(null);setPerfil("admin");setAba("obras");}} style={{
+              background:"transparent",border:"none",color:"#64748b",cursor:"pointer",
+              fontSize:11,marginLeft:4}}>Sair</button>
+          </div>
           {p.gerenciar&&(
             <button onClick={()=>setModalNova(true)} style={{
               background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:10,
