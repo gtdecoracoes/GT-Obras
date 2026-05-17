@@ -1,17 +1,917 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#060f1e" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="GT Obras" />
-    <title>GT Obras – GT Decorações</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#060f1e"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="GT Obras"/>
+  <title>GT Obras – GT Decorações</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; } body { background: #060f1e; }</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState } = React;
+
+
+
+const CORES = ["#f97316","#3b82f6","#8b5cf6","#22c55e","#ec4899","#f59e0b","#14b8a6","#ef4444","#a855f7","#06b6d4"];
+
+const PERFIS = [
+  { id:"admin",        label:"Admin (Dono)",  icon:"👑", verValor:true,  gerenciar:true,  verRelatorio:true  },
+  { id:"gestora",      label:"Gestora",       icon:"📋", verValor:true,  gerenciar:true,  verRelatorio:true  },
+  { id:"funcionario",  label:"Funcionário",   icon:"👷", verValor:false, gerenciar:false, verRelatorio:false },
+  { id:"terceirizado", label:"Terceirizado",  icon:"🔧", verValor:false, gerenciar:false, verRelatorio:false },
+];
+
+const TIPOS_INICIAL = ["Box de Banheiro","Espelho","Sacada/Varanda","Janela","Manutenção","Vidro Comum","Guarda-corpo","Porta de Vidro","Vidro Temperado","Cobertura de Vidro","Divisória","Outro"];
+
+const STATUS_FLOW = [
+  { id:"lead",       label:"Lead",             color:"#64748b", icon:"📞" },
+  { id:"orcamento",  label:"Orçamento",        color:"#f59e0b", icon:"📋" },
+  { id:"aprovado",   label:"Aprovado",         color:"#3b82f6", icon:"✅" },
+  { id:"medicao",    label:"Medição",          color:"#8b5cf6", icon:"📐" },
+  { id:"aguardando", label:"Aguard. Material", color:"#ec4899", icon:"📦" },
+  { id:"execucao",   label:"Em Execução",      color:"#f97316", icon:"🔧" },
+  { id:"pendente",   label:"Pendente/Revisão", color:"#ef4444", icon:"⚠️" },
+  { id:"finalizado", label:"Finalizado",       color:"#22c55e", icon:"🏁" },
+];
+
+const EQUIPE_INICIAL = [
+  { id:1, nome:"Gutemberg", funcao:"Dono",             perfil:"admin",        telefone:"", cor:"#f97316", ativo:true },
+  { id:2, nome:"Gestora",   funcao:"Gestora de Obras", perfil:"gestora",      telefone:"", cor:"#8b5cf6", ativo:true },
+  { id:3, nome:"Irani",     funcao:"Instalador",       perfil:"funcionario",  telefone:"", cor:"#3b82f6", ativo:true },
+  { id:4, nome:"Juliano",   funcao:"Instalador",       perfil:"funcionario",  telefone:"", cor:"#22c55e", ativo:true },
+  { id:5, nome:"Eduardo",   funcao:"Terceirizado",     perfil:"terceirizado", telefone:"", cor:"#ec4899", ativo:true },
+];
+
+const OBRAS_INICIAL = [
+  {
+    id:1, cliente:"Maria Fernanda", telefone:"(11) 99123-4567",
+    endereco:"Rua das Flores, 234 – Moema, SP",
+    tipo:"Box de Banheiro", status:"execucao", responsavelId:3, valor:2400,
+    fornecedor:{ pendente:true, prazo:"22/05/2026", item:"Box temperado 8mm" },
+    checklist:[
+      {id:1,item:"Tirar medidas do banheiro",feito:true},
+      {id:2,item:"Confirmar cor do perfil",feito:true},
+      {id:3,item:"Instalar box",feito:false},
+      {id:4,item:"Silicone e acabamento",feito:false},
+    ],
+    notas:"Cliente quer perfil preto fosco. Banheiro social.", dataCriacao:"2026-05-08"
+  },
+  {
+    id:2, cliente:"Roberto Alves", telefone:"(11) 98765-3210",
+    endereco:"Av. Paulista, 1000 – Bela Vista, SP",
+    tipo:"Sacada/Varanda", status:"aguardando", responsavelId:4, valor:5800,
+    fornecedor:{ pendente:true, prazo:"26/05/2026", item:"Vidro laminado 10mm" },
+    checklist:[
+      {id:1,item:"Vistoria técnica",feito:true},
+      {id:2,item:"Solicitar vidro ao fornecedor",feito:true},
+      {id:3,item:"Instalação",feito:false},
+    ],
+    notas:"Sacada 3,2m. Andar alto, precisa de andaime.", dataCriacao:"2026-05-05"
+  },
+  {
+    id:3, cliente:"Ana Paula Costa", telefone:"(11) 91234-5678",
+    endereco:"Rua Augusta, 555 – Consolação, SP",
+    tipo:"Espelho", status:"finalizado", responsavelId:3, valor:890,
+    fornecedor:{ pendente:false, prazo:"", item:"" },
+    checklist:[
+      {id:1,item:"Medir parede",feito:true},
+      {id:2,item:"Instalar espelho",feito:true},
+      {id:3,item:"Fixar moldura",feito:true},
+    ],
+    notas:"Espelho de corpo inteiro. Instalado com sucesso.", dataCriacao:"2026-04-28"
+  },
+  {
+    id:4, cliente:"Carlos Mendes", telefone:"(11) 97654-3210",
+    endereco:"Rua Oscar Freire, 78 – Jardins, SP",
+    tipo:"Manutenção", status:"aprovado", responsavelId:4, valor:320,
+    fornecedor:{ pendente:false, prazo:"", item:"" },
+    checklist:[
+      {id:1,item:"Diagnosticar problema",feito:false},
+      {id:2,item:"Trocar borracha do box",feito:false},
+    ],
+    notas:"Box antigo com vazamento. Banheiro do quarto.", dataCriacao:"2026-05-14"
+  },
+];
+
+const getSt  = (id) => STATUS_FLOW.find(s=>s.id===id) || STATUS_FLOW[0];
+const nextSt = (id) => { const i=STATUS_FLOW.findIndex(s=>s.id===id); return i<STATUS_FLOW.length-1?STATUS_FLOW[i+1].id:id; };
+const getP   = (id) => PERFIS.find(p=>p.id===id) || PERFIS[2];
+
+function Av({ nome, cor, size=32 }) {
+  const t=(nome||"?").split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase();
+  return <div style={{width:size,height:size,borderRadius:"50%",background:cor||"#475569",color:"#fff",
+    display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.36,fontWeight:800,
+    flexShrink:0,boxShadow:`0 2px 8px ${cor||"#475569"}55`}}>{t}</div>;
+}
+
+function Badge({ status }) {
+  const s=getSt(status);
+  return <span style={{background:s.color+"22",color:s.color,border:`1px solid ${s.color}55`,
+    borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{s.icon} {s.label}</span>;
+}
+
+const inp={width:"100%",background:"#1e293b",border:"1px solid #334155",borderRadius:10,
+  color:"#e2e8f0",padding:"10px 14px",fontSize:14,boxSizing:"border-box",fontFamily:"inherit"};
+
+function Lbl({ t, children }) {
+  return <div><div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:5,textTransform:"uppercase"}}>{t}</div>{children}</div>;
+}
+
+// ─── MODAL FUNCIONÁRIO ────────────────────────────────────────────────────────
+function ModalFunc({ func, onClose, onSave, onDelete }) {
+  const isEdit=!!func?.id;
+  const [f,setF]=useState(func||{nome:"",funcao:"",perfil:"funcionario",telefone:"",cor:CORES[0],ativo:true});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1200,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,width:"100%",
+        maxWidth:420,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column",
+        boxShadow:"0 25px 60px rgba(0,0,0,0.7)"}}>
+        <div style={{padding:"18px 22px",borderBottom:"1px solid #1e293b",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h2 style={{margin:0,fontSize:16,fontWeight:800,color:"#f1f5f9"}}>{isEdit?"✏️ Editar Pessoa":"➕ Nova Pessoa"}</h2>
+          <button onClick={onClose} style={{background:"#1e293b",border:"none",borderRadius:8,color:"#94a3b8",cursor:"pointer",padding:"6px 10px"}}>✕</button>
+        </div>
+        <div style={{padding:22,overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,background:"#1e293b",borderRadius:14,padding:14}}>
+            <Av nome={f.nome||"?"} cor={f.cor} size={50}/>
+            <div>
+              <div style={{fontSize:15,fontWeight:800,color:"#f1f5f9"}}>{f.nome||"Nome da pessoa"}</div>
+              <div style={{fontSize:12,color:"#64748b",marginTop:2}}>{getP(f.perfil).icon} {f.funcao||"Função"}</div>
+            </div>
+          </div>
+          <Lbl t="Cor do Avatar">
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",paddingTop:4}}>
+              {CORES.map(c=><div key={c} onClick={()=>s("cor",c)} style={{width:28,height:28,borderRadius:"50%",
+                background:c,cursor:"pointer",border:f.cor===c?"3px solid #fff":"3px solid transparent",
+                outline:f.cor===c?`2px solid ${c}`:"none",outlineOffset:2}}/>)}
+            </div>
+          </Lbl>
+          <Lbl t="Nome *"><input value={f.nome} onChange={e=>s("nome",e.target.value)} placeholder="Ex: Eduardo Silva" style={inp}/></Lbl>
+          <Lbl t="Função / Cargo"><input value={f.funcao} onChange={e=>s("funcao",e.target.value)} placeholder="Ex: Instalador, Medidor, Auxiliar..." style={inp}/></Lbl>
+          <Lbl t="Perfil de Acesso">
+            <select value={f.perfil} onChange={e=>s("perfil",e.target.value)} style={inp}>
+              {PERFIS.map(p=><option key={p.id} value={p.id}>{p.icon} {p.label}</option>)}
+            </select>
+            <div style={{marginTop:8,background:"#0f172a",borderRadius:8,padding:"8px 12px",fontSize:12,
+              color:f.perfil==="admin"?"#f59e0b":f.perfil==="gestora"?"#8b5cf6":f.perfil==="funcionario"?"#3b82f6":"#ec4899"}}>
+              {f.perfil==="admin"&&"👑 Acesso total: valores, relatórios, cria e edita tudo"}
+              {f.perfil==="gestora"&&"📋 Vê valores e relatórios, cria e edita obras"}
+              {f.perfil==="funcionario"&&"👷 Vê só obras atribuídas — sem valores financeiros"}
+              {f.perfil==="terceirizado"&&"🔧 Vê só obras atribuídas — sem valores financeiros"}
+            </div>
+          </Lbl>
+          <Lbl t="Telefone / WhatsApp"><input value={f.telefone} onChange={e=>s("telefone",e.target.value)} placeholder="(11) 9xxxx-xxxx" style={inp}/></Lbl>
+          <Lbl t="Status">
+            <div style={{display:"flex",gap:8}}>
+              {[true,false].map(v=>(
+                <button key={String(v)} onClick={()=>s("ativo",v)} style={{flex:1,padding:"9px 0",borderRadius:10,
+                  cursor:"pointer",fontWeight:700,fontSize:13,border:f.ativo===v?"none":"1px solid #334155",
+                  background:f.ativo===v?(v?"#22c55e":"#ef4444"):"#1e293b",color:f.ativo===v?"#fff":"#64748b"}}>
+                  {v?"✅ Ativo":"⛔ Inativo"}
+                </button>
+              ))}
+            </div>
+          </Lbl>
+        </div>
+        <div style={{padding:"14px 22px",borderTop:"1px solid #1e293b",display:"flex",gap:8}}>
+          {isEdit&&<button onClick={()=>onDelete(func.id)} style={{background:"#7f1d1d",border:"none",
+            borderRadius:10,color:"#fca5a5",cursor:"pointer",padding:"11px 16px",fontSize:13,fontWeight:700}}>🗑️</button>}
+          <button onClick={()=>{if(f.nome.trim())onSave({...f,id:f.id||Date.now()});}} style={{flex:1,
+            background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:10,
+            color:"#fff",cursor:"pointer",padding:12,fontSize:14,fontWeight:800}}>
+            {isEdit?"Salvar Alterações":"Adicionar à Equipe"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MODAL NOVA OBRA ──────────────────────────────────────────────────────────
+function ModalNovaObra({ onClose, onCreate, equipe, tipos, setTipos }) {
+  const ativos=equipe.filter(e=>e.ativo);
+  const [novoTipo,setNovoTipo]=useState("");
+  const [f,setF]=useState({cliente:"",telefone:"",endereco:"",tipo:tipos[0]||"Box de Banheiro",
+    responsavelId:ativos[0]?.id||null,valor:"",notas:"",fornecedor:{pendente:false,prazo:"",item:""}});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1100,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,width:"100%",
+        maxWidth:500,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column",
+        boxShadow:"0 25px 60px rgba(0,0,0,0.7)"}}>
+        <div style={{padding:"18px 22px",borderBottom:"1px solid #1e293b",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h2 style={{margin:0,fontSize:17,fontWeight:800,color:"#f1f5f9"}}>➕ Nova Obra / Cliente</h2>
+          <button onClick={onClose} style={{background:"#1e293b",border:"none",borderRadius:8,color:"#94a3b8",cursor:"pointer",padding:"6px 10px"}}>✕</button>
+        </div>
+        <div style={{padding:22,overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
+          <Lbl t="Cliente *"><input value={f.cliente} onChange={e=>s("cliente",e.target.value)} placeholder="Nome do cliente" style={inp}/></Lbl>
+          <Lbl t="Telefone"><input value={f.telefone} onChange={e=>s("telefone",e.target.value)} placeholder="(11) 9xxxx-xxxx" style={inp}/></Lbl>
+          <Lbl t="Endereço"><input value={f.endereco} onChange={e=>s("endereco",e.target.value)} placeholder="Rua, número – bairro, cidade" style={inp}/></Lbl>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <Lbl t="Tipo de Serviço">
+              <select value={f.tipo} onChange={e=>s("tipo",e.target.value)} style={inp}>
+                {tipos.map(t=><option key={t}>{t}</option>)}
+              </select>
+            </Lbl>
+            <Lbl t="Valor (R$)">
+              <input type="number" value={f.valor} onChange={e=>s("valor",e.target.value)} placeholder="0" style={inp}/>
+            </Lbl>
+          </div>
+          <Lbl t="Responsável">
+            <select value={f.responsavelId} onChange={e=>s("responsavelId",Number(e.target.value))} style={inp}>
+              {ativos.map(e=><option key={e.id} value={e.id}>{getP(e.perfil).icon} {e.nome} — {e.funcao}</option>)}
+            </select>
+          </Lbl>
+          <Lbl t="Notas / Instruções para o técnico">
+            <textarea value={f.notas} onChange={e=>s("notas",e.target.value)}
+              placeholder="Instruções, observações, detalhes do serviço..."
+              style={{...inp,minHeight:80,resize:"vertical"}}/>
+          </Lbl>
+          <div style={{background:"#1e293b",borderRadius:12,padding:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:f.fornecedor.pendente?12:0}}>
+              <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>📦 Tem pedido de fornecedor?</span>
+              <button onClick={()=>s("fornecedor",{...f.fornecedor,pendente:!f.fornecedor.pendente})} style={{
+                background:f.fornecedor.pendente?"#f97316":"#334155",border:"none",borderRadius:20,
+                color:"#fff",cursor:"pointer",padding:"4px 14px",fontSize:12,fontWeight:700}}>
+                {f.fornecedor.pendente?"Sim":"Não"}
+              </button>
+            </div>
+            {f.fornecedor.pendente&&(
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <input value={f.fornecedor.item} onChange={e=>s("fornecedor",{...f.fornecedor,item:e.target.value})}
+                  placeholder="Item pedido (ex: Box temperado 8mm)" style={inp}/>
+                <input value={f.fornecedor.prazo} onChange={e=>s("fornecedor",{...f.fornecedor,prazo:e.target.value})}
+                  placeholder="Prazo de chegada (ex: 26/05/2026)" style={inp}/>
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{padding:"14px 22px",borderTop:"1px solid #1e293b"}}>
+          <button onClick={()=>{if(f.cliente.trim()){onCreate({...f,id:Date.now(),status:"lead",
+            valor:Number(f.valor)||0,checklist:[],dataCriacao:new Date().toISOString().slice(0,10)});onClose();}}}
+            style={{width:"100%",background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",
+              borderRadius:12,color:"#fff",cursor:"pointer",padding:14,fontSize:15,fontWeight:800}}>
+            Cadastrar Obra
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MODAL DETALHES DA OBRA ───────────────────────────────────────────────────
+function ModalObra({ obra, onClose, onUpdate, onDelete, equipe, perfil }) {
+  const [tab,setTab]=useState("info");
+  const [notas,setNotas]=useState(obra.notas);
+  const [checklist,setChecklist]=useState(obra.checklist);
+  const [fotos,setFotos]=useState(obra.fotos||[]);
+  const [novoItem,setNovoItem]=useState("");
+  const s=getSt(obra.status);
+  const p=getP(perfil);
+  const resp=equipe.find(e=>e.id===obra.responsavelId);
+
+  const toggleCheck=(id)=>{
+    const u=checklist.map(c=>c.id===id?{...c,feito:!c.feito}:c);
+    setChecklist(u);onUpdate({...obra,checklist:u});
+  };
+  const addItem=()=>{
+    if(!novoItem.trim())return;
+    const u=[...checklist,{id:Date.now(),item:novoItem,feito:false}];
+    setChecklist(u);onUpdate({...obra,checklist:u});setNovoItem("");
+  };
+  const removeItem=(id)=>{
+    const u=checklist.filter(c=>c.id!==id);
+    setChecklist(u);onUpdate({...obra,checklist:u});
+  };
+  const addFotos=(files)=>{
+    Array.from(files).forEach(file=>{
+      const reader=new FileReader();
+      reader.onload=(e)=>{
+        setFotos(prev=>{
+          const u=[...prev,{id:Date.now()+Math.random(),url:e.target.result,nome:file.name,data:new Date().toLocaleDateString("pt-BR")}];
+          onUpdate({...obra,fotos:u,checklist,notas});
+          return u;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  const removeFoto=(id)=>{
+    const u=fotos.filter(f=>f.id!==id);
+    setFotos(u);onUpdate({...obra,fotos:u,checklist,notas});
+  };
+
+  const conc=checklist.filter(c=>c.feito).length;
+  const prog=checklist.length?Math.round((conc/checklist.length)*100):0;
+
+  const TABS=[
+    {id:"info",label:"📋 Info"},
+    {id:"checklist",label:"✅ Tarefas"},
+    {id:"notas",label:"📝 Notas"},
+    {id:"fotos",label:"📸 Fotos"+(fotos.length>0?" ("+fotos.length+")":"")},
+    ...(p.gerenciar?[{id:"fornecedor",label:"📦 Fornecedor"}]:[]),
+  ];
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1000,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:20,width:"100%",
+        maxWidth:580,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column",
+        boxShadow:"0 25px 60px rgba(0,0,0,0.6)"}}>
+        <div style={{padding:"18px 22px 0",borderBottom:"1px solid #1e293b"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div>
+              <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:3}}>
+                #{String(obra.id).slice(-4).padStart(4,"0")} · {obra.dataCriacao}
+              </div>
+              <h2 style={{margin:0,fontSize:19,fontWeight:800,color:"#f1f5f9"}}>{obra.cliente}</h2>
+              <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>{obra.tipo}</div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              {p.gerenciar&&<button onClick={()=>onDelete(obra.id)} style={{background:"#7f1d1d",border:"none",
+                borderRadius:8,color:"#fca5a5",cursor:"pointer",padding:"6px 10px",fontSize:12}}>🗑️</button>}
+              <button onClick={onClose} style={{background:"#1e293b",border:"none",borderRadius:8,color:"#94a3b8",cursor:"pointer",padding:"6px 10px"}}>✕</button>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:0,overflowX:"auto"}}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"transparent",border:"none",
+                borderBottom:`2px solid ${tab===t.id?s.color:"transparent"}`,
+                color:tab===t.id?s.color:"#64748b",cursor:"pointer",padding:"8px 14px",
+                fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{padding:22,overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:12}}>
+
+          {tab==="info"&&(
+            <>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div style={{background:"#1e293b",borderRadius:12,padding:14,gridColumn:"span 2"}}>
+                  <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:4}}>📍 ENDEREÇO</div>
+                  <div style={{fontSize:13,color:"#e2e8f0",fontWeight:600}}>{obra.endereco||"—"}</div>
+                </div>
+                <div style={{background:"#1e293b",borderRadius:12,padding:14}}>
+                  <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:4}}>📱 TELEFONE</div>
+                  <div style={{fontSize:13,color:"#e2e8f0",fontWeight:600}}>{obra.telefone||"—"}</div>
+                </div>
+                <div style={{background:"#1e293b",borderRadius:12,padding:14}}>
+                  <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:4}}>👷 RESPONSÁVEL</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                    <Av nome={resp?.nome||"?"} cor={resp?.cor} size={24}/>
+                    <div>
+                      <div style={{fontSize:13,color:"#e2e8f0",fontWeight:600}}>{resp?.nome||"—"}</div>
+                      <div style={{fontSize:10,color:"#64748b"}}>{resp?.funcao||""}</div>
+                    </div>
+                  </div>
+                </div>
+                {p.verValor&&(
+                  <div style={{background:"linear-gradient(135deg,#14532d22,#052e1622)",
+                    border:"1px solid #22c55e33",borderRadius:12,padding:14,gridColumn:"span 2"}}>
+                    <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:4}}>💰 VALOR DA OBRA</div>
+                    <div style={{fontSize:22,fontWeight:900,color:"#22c55e"}}>
+                      R$ {(obra.valor||0).toLocaleString("pt-BR")}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{background:"#1e293b",borderRadius:12,padding:14}}>
+                <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:8}}>STATUS</div>
+                <Badge status={obra.status}/>
+              </div>
+              {p.gerenciar&&obra.status!=="finalizado"&&(
+                <button onClick={()=>onUpdate({...obra,status:nextSt(obra.status)})} style={{
+                  background:`linear-gradient(135deg,${s.color},${s.color}bb)`,border:"none",
+                  borderRadius:12,color:"#fff",cursor:"pointer",padding:14,fontSize:14,fontWeight:800}}>
+                  Avançar → {getSt(nextSt(obra.status)).label}
+                </button>
+              )}
+              {p.gerenciar&&obra.status==="finalizado"&&(
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <button onClick={()=>onUpdate({...obra,status:"pendente"})} style={{
+                    background:"#450a0a",border:"1px solid #ef444433",borderRadius:12,color:"#fca5a5",
+                    cursor:"pointer",padding:12,fontSize:13,fontWeight:700}}>
+                    ⚠️ Marcar como Pendente / Precisa Revisão
+                  </button>
+                  <button onClick={()=>onUpdate({...obra,status:"execucao"})} style={{
+                    background:"#1e293b",border:"1px solid #334155",borderRadius:12,color:"#94a3b8",
+                    cursor:"pointer",padding:12,fontSize:13,fontWeight:700}}>
+                    ↩️ Reabrir para Execução
+                  </button>
+                </div>
+              )}
+              {p.gerenciar&&obra.status==="pendente"&&(
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <div style={{background:"#450a0a",border:"1px solid #ef444433",borderRadius:12,padding:14,
+                    fontSize:13,color:"#fca5a5",fontWeight:600,lineHeight:1.5}}>
+                    ⚠️ Obra marcada como Pendente — precisa de atenção antes de finalizar.
+                  </div>
+                  <button onClick={()=>onUpdate({...obra,status:"execucao"})} style={{
+                    background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:12,
+                    color:"#fff",cursor:"pointer",padding:12,fontSize:13,fontWeight:700}}>
+                    🔧 Retornar para Execução
+                  </button>
+                  <button onClick={()=>onUpdate({...obra,status:"finalizado"})} style={{
+                    background:"#14532d",border:"1px solid #22c55e44",borderRadius:12,color:"#86efac",
+                    cursor:"pointer",padding:12,fontSize:13,fontWeight:700}}>
+                    ✅ Resolver e Finalizar
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {tab==="checklist"&&(
+            <>
+              <div style={{background:"#1e293b",borderRadius:8,overflow:"hidden"}}>
+                <div style={{height:6,background:s.color,width:`${prog}%`,transition:"width .4s"}}/>
+              </div>
+              <div style={{fontSize:12,color:"#64748b",textAlign:"right"}}>
+                {conc}/{checklist.length} concluídos ({prog}%)
+              </div>
+              {checklist.map(c=>(
+                <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,
+                  background:c.feito?"#1e293b":"#0f172a",
+                  border:`1px solid ${c.feito?"#22c55e33":"#1e293b"}`,
+                  borderRadius:10,padding:"10px 14px"}}>
+                  <div onClick={()=>toggleCheck(c.id)} style={{width:22,height:22,borderRadius:6,flexShrink:0,
+                    background:c.feito?"#22c55e":"transparent",border:`2px solid ${c.feito?"#22c55e":"#334155"}`,
+                    display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:800}}>
+                    {c.feito?"✓":""}
+                  </div>
+                  <span style={{flex:1,fontSize:14,color:c.feito?"#64748b":"#e2e8f0",
+                    textDecoration:c.feito?"line-through":"none"}}>{c.item}</span>
+                  {p.gerenciar&&<button onClick={()=>removeItem(c.id)} style={{background:"transparent",
+                    border:"none",color:"#475569",cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button>}
+                </div>
+              ))}
+              {checklist.length===0&&<div style={{textAlign:"center",color:"#475569",padding:24,fontSize:13}}>Nenhuma tarefa ainda</div>}
+              {p.gerenciar&&(
+                <div style={{display:"flex",gap:8}}>
+                  <input value={novoItem} onChange={e=>setNovoItem(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&addItem()} placeholder="Nova tarefa..." style={{...inp,flex:1}}/>
+                  <button onClick={addItem} style={{background:s.color,border:"none",borderRadius:10,
+                    color:"#fff",cursor:"pointer",padding:"10px 16px",fontWeight:800,fontSize:16}}>+</button>
+                </div>
+              )}
+            </>
+          )}
+
+          {tab==="notas"&&(
+            <>
+              <textarea value={notas} onChange={e=>setNotas(e.target.value)} readOnly={!p.gerenciar}
+                placeholder="Instruções para o técnico, observações, detalhes do serviço..."
+                style={{...inp,minHeight:220,resize:"vertical"}}/>
+              {p.gerenciar&&(
+                <button onClick={()=>onUpdate({...obra,notas})} style={{
+                  background:s.color,border:"none",borderRadius:10,color:"#fff",
+                  cursor:"pointer",padding:"10px 20px",fontSize:14,fontWeight:700}}>
+                  💾 Salvar Notas
+                </button>
+              )}
+            </>
+          )}
+
+          {tab==="fotos"&&(
+            <>
+              {p.gerenciar&&(
+                <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                  background:"#1e293b",border:"2px dashed #334155",borderRadius:14,padding:20,
+                  cursor:"pointer",color:"#64748b",fontSize:14,fontWeight:600}}>
+                  <input type="file" accept="image/*" multiple style={{display:"none"}}
+                    onChange={e=>addFotos(e.target.files)}/>
+                  📸 Toque para adicionar fotos
+                </label>
+              )}
+              {fotos.length===0&&(
+                <div style={{textAlign:"center",color:"#475569",padding:24,fontSize:13}}>
+                  {p.gerenciar?"Nenhuma foto ainda — adicione acima":"Nenhuma foto cadastrada pelo responsável"}
+                </div>
+              )}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {fotos.map(f=>(
+                  <div key={f.id} style={{position:"relative",borderRadius:12,overflow:"hidden",
+                    background:"#1e293b",aspectRatio:"4/3"}}>
+                    <img src={f.url} alt={f.nome} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    <div style={{position:"absolute",bottom:0,left:0,right:0,
+                      background:"linear-gradient(transparent,rgba(0,0,0,0.7))",padding:"8px 10px"}}>
+                      <div style={{fontSize:10,color:"#e2e8f0",fontWeight:600,
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.nome}</div>
+                      <div style={{fontSize:9,color:"#94a3b8"}}>{f.data}</div>
+                    </div>
+                    {p.gerenciar&&(
+                      <button onClick={()=>removeFoto(f.id)} style={{position:"absolute",top:6,right:6,
+                        background:"rgba(0,0,0,0.6)",border:"none",borderRadius:6,
+                        color:"#fca5a5",cursor:"pointer",padding:"3px 7px",fontSize:12,fontWeight:700}}>✕</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {tab==="fornecedor"&&p.gerenciar&&(
+            <>
+              <div style={{background:obra.fornecedor.pendente?"#7c2d1222":"#14532d22",
+                border:`1px solid ${obra.fornecedor.pendente?"#f9731644":"#22c55e44"}`,
+                borderRadius:12,padding:16}}>
+                <div style={{fontSize:13,fontWeight:700,color:obra.fornecedor.pendente?"#f97316":"#22c55e",
+                  marginBottom:obra.fornecedor.pendente?12:0}}>
+                  {obra.fornecedor.pendente?"⏳ Pendência de Fornecedor":"✅ Sem pendências de fornecedor"}
+                </div>
+                {obra.fornecedor.pendente&&(
+                  <>
+                    <div style={{fontSize:14,color:"#e2e8f0",marginBottom:6}}><b>Item:</b> {obra.fornecedor.item}</div>
+                    <div style={{fontSize:14,color:"#e2e8f0"}}><b>Prazo:</b> {obra.fornecedor.prazo}</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:8}}>Prazo padrão: 10–12 dias úteis</div>
+                  </>
+                )}
+              </div>
+              {obra.fornecedor.pendente?(
+                <button onClick={()=>onUpdate({...obra,fornecedor:{pendente:false,prazo:"",item:""}})} style={{
+                  background:"#22c55e",border:"none",borderRadius:10,color:"#fff",
+                  cursor:"pointer",padding:12,fontSize:14,fontWeight:700}}>
+                  ✅ Material recebido — remover pendência
+                </button>
+              ):(
+                <button onClick={()=>onUpdate({...obra,fornecedor:{pendente:true,prazo:"",item:""}})} style={{
+                  background:"#1e293b",border:"1px solid #334155",borderRadius:10,color:"#94a3b8",
+                  cursor:"pointer",padding:12,fontSize:13,fontWeight:700}}>
+                  + Registrar pedido de fornecedor
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
+function GTObras() {
+  const [equipe,setEquipe]=useState(EQUIPE_INICIAL);
+  const [tipos,setTipos]=useState(TIPOS_INICIAL);
+  const [obras,setObras]=useState(OBRAS_INICIAL);
+  const [perfil,setPerfil]=useState("admin");
+  const [aba,setAba]=useState("obras");
+  const [obraSel,setObraSel]=useState(null);
+  const [modalNova,setModalNova]=useState(false);
+  const [funcSel,setFuncSel]=useState(null);
+  const [filtroSt,setFiltroSt]=useState("todos");
+  const [busca,setBusca]=useState("");
+
+  const p=getP(perfil);
+
+  const minhasObras=(perfil==="admin"||perfil==="gestora")
+    ? obras
+    : obras.filter(o=>{
+        const resp=equipe.find(e=>e.id===o.responsavelId);
+        const eu=equipe.find(e=>e.perfil===perfil);
+        return resp&&eu&&resp.id===eu.id;
+      });
+
+  const obrasFiltradas=minhasObras.filter(o=>{
+    if(filtroSt!=="todos"&&o.status!==filtroSt)return false;
+    if(busca&&!o.cliente.toLowerCase().includes(busca.toLowerCase())&&
+       !o.endereco.toLowerCase().includes(busca.toLowerCase()))return false;
+    return true;
+  });
+
+  const updateObra=(u)=>{setObras(prev=>prev.map(o=>o.id===u.id?u:o));if(obraSel?.id===u.id)setObraSel(u);};
+  const deleteObra=(id)=>{setObras(prev=>prev.filter(o=>o.id!==id));setObraSel(null);};
+  const saveFunc=(f)=>{setEquipe(prev=>prev.find(e=>e.id===f.id)?prev.map(e=>e.id===f.id?f:e):[...prev,f]);setFuncSel(null);};
+  const deleteFunc=(id)=>{setEquipe(prev=>prev.filter(e=>e.id!==id));setFuncSel(null);};
+
+  const rel={
+    total:obras.length,
+    finalizados:obras.filter(o=>o.status==="finalizado").length,
+    andamento:obras.filter(o=>!["finalizado","lead"].includes(o.status)).length,
+    fornecedor:obras.filter(o=>o.fornecedor?.pendente).length,
+    receita:obras.filter(o=>o.status==="finalizado").reduce((a,o)=>a+o.valor,0),
+    porPessoa:equipe.filter(e=>e.ativo).map(e=>({
+      ...e,
+      total:obras.filter(o=>o.responsavelId===e.id).length,
+      fin:obras.filter(o=>o.responsavelId===e.id&&o.status==="finalizado").length,
+    })).filter(e=>e.total>0),
+  };
+
+  const ABAS=[
+    {id:"obras",label:"🔧 Obras"},
+    ...(p.verRelatorio?[{id:"relatorio",label:"📊 Relatório"}]:[]),
+    ...(p.gerenciar?[{id:"equipe",label:"👥 Equipe"}]:[]),
+  ];
+
+  return (
+    <div style={{fontFamily:"'Sora','Nunito',sans-serif",background:"#060f1e",minHeight:"100vh",color:"#e2e8f0"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:#0f172a}
+        ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+        input,select,textarea{outline:none}
+        input:focus,select:focus,textarea:focus{border-color:#f97316!important}
+      `}</style>
+
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,#0f172a 0%,#1a0a00 100%)",borderBottom:"1px solid #1e293b",
+        padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",
+        position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#f97316,#ea580c)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:16,fontWeight:900,color:"#fff",boxShadow:"0 4px 12px #f9731655"}}>GT</div>
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:"#f1f5f9",lineHeight:1}}>GT Decorações</div>
+            <div style={{fontSize:9,color:"#64748b",letterSpacing:1}}>GESTÃO DE OBRAS</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <select value={perfil} onChange={e=>{setPerfil(e.target.value);setAba("obras");}} style={{
+            background:"#1e293b",border:"1px solid #334155",borderRadius:8,
+            color:"#e2e8f0",padding:"6px 10px",fontSize:11,cursor:"pointer"}}>
+            {PERFIS.map(pr=><option key={pr.id} value={pr.id}>{pr.icon} {pr.label}</option>)}
+          </select>
+          {p.gerenciar&&(
+            <button onClick={()=>setModalNova(true)} style={{
+              background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:10,
+              color:"#fff",cursor:"pointer",padding:"7px 14px",fontSize:12,fontWeight:700,
+              boxShadow:"0 4px 12px #f9731655"}}>+ Obra</button>
+          )}
+        </div>
+      </div>
+
+      {/* ABAS */}
+      <div style={{display:"flex",background:"#0f172a",borderBottom:"1px solid #1e293b",padding:"0 18px"}}>
+        {ABAS.map(a=>(
+          <button key={a.id} onClick={()=>setAba(a.id)} style={{background:"transparent",border:"none",
+            borderBottom:`2px solid ${aba===a.id?"#f97316":"transparent"}`,
+            color:aba===a.id?"#f97316":"#64748b",cursor:"pointer",
+            padding:"11px 14px",fontSize:12,fontWeight:700,transition:"all .2s"}}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ABA OBRAS */}
+      {aba==="obras"&&(
+        <div style={{padding:"14px 18px"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+            <input value={busca} onChange={e=>setBusca(e.target.value)}
+              placeholder="🔍  Buscar cliente ou endereço..." style={{...inp,borderRadius:12}}/>
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+              <button onClick={()=>setFiltroSt("todos")} style={{
+                background:filtroSt==="todos"?"#f97316":"#1e293b",border:"none",borderRadius:8,
+                color:filtroSt==="todos"?"#fff":"#94a3b8",cursor:"pointer",
+                padding:"5px 12px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+                Todos ({minhasObras.length})
+              </button>
+              {STATUS_FLOW.map(s=>{
+                const c=minhasObras.filter(o=>o.status===s.id).length;
+                if(!c)return null;
+                return(
+                  <button key={s.id} onClick={()=>setFiltroSt(s.id)} style={{
+                    background:filtroSt===s.id?s.color:"#1e293b",
+                    border:`1px solid ${filtroSt===s.id?s.color:"#334155"}`,
+                    borderRadius:8,color:filtroSt===s.id?"#fff":"#94a3b8",
+                    cursor:"pointer",padding:"5px 12px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+                    {s.icon} {s.label} ({c})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {obrasFiltradas.length===0&&(
+              <div style={{textAlign:"center",color:"#475569",padding:40,fontSize:14}}>Nenhuma obra encontrada</div>
+            )}
+            {obrasFiltradas.map(obra=>{
+              const s=getSt(obra.status);
+              const resp=equipe.find(e=>e.id===obra.responsavelId);
+              const conc=obra.checklist.filter(c=>c.feito).length;
+              const prog=obra.checklist.length?Math.round((conc/obra.checklist.length)*100):0;
+              return(
+                <div key={obra.id} onClick={()=>setObraSel(obra)} style={{
+                  background:"#0f172a",border:`1px solid ${obra.fornecedor?.pendente?"#f9731633":"#1e293b"}`,
+                  borderLeft:`3px solid ${s.color}`,borderRadius:14,padding:14,cursor:"pointer",position:"relative"}}>
+                  {obra.fornecedor?.pendente&&(
+                    <div style={{position:"absolute",top:10,right:10,background:"#7c2d12",
+                      borderRadius:6,padding:"2px 8px",fontSize:9,color:"#f97316",fontWeight:700}}>⏳ FORNECEDOR</div>
+                  )}
+                  <div style={{display:"flex",gap:12}}>
+                    <Av nome={resp?.nome||"?"} cor={resp?.cor} size={40}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                        <div>
+                          <div style={{fontSize:15,fontWeight:800,color:"#f1f5f9"}}>{obra.cliente}</div>
+                          <div style={{fontSize:11,color:"#64748b"}}>{obra.tipo} · {resp?.nome||"—"}</div>
+                        </div>
+                        <Badge status={obra.status}/>
+                      </div>
+                      <div style={{fontSize:11,color:"#475569",marginTop:5}}>
+                        📍 {obra.endereco.length>44?obra.endereco.slice(0,44)+"…":obra.endereco}
+                      </div>
+                      {obra.checklist.length>0&&(
+                        <div style={{marginTop:8}}>
+                          <div style={{background:"#1e293b",borderRadius:4,height:4,overflow:"hidden"}}>
+                            <div style={{height:"100%",background:s.color,width:`${prog}%`,borderRadius:4}}/>
+                          </div>
+                          <div style={{fontSize:10,color:"#475569",marginTop:3}}>
+                            Tarefas: {conc}/{obra.checklist.length} ({prog}%)
+                          </div>
+                        </div>
+                      )}
+                      <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+                        <span style={{fontSize:10,color:"#475569"}}>{obra.dataCriacao}</span>
+                        {p.verValor&&(
+                          <span style={{fontSize:13,fontWeight:700,color:"#22c55e"}}>
+                            R$ {(obra.valor||0).toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ABA RELATÓRIO */}
+      {aba==="relatorio"&&p.verRelatorio&&(
+        <div style={{padding:"14px 18px",display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {[["Total",rel.total,"#3b82f6","📋"],["Finalizados",rel.finalizados,"#22c55e","🏁"],
+              ["Em Andamento",rel.andamento,"#f97316","🔧"],["Aguard. Fornecedor",rel.fornecedor,"#ec4899","📦"]
+            ].map(([lbl,val,cor,icon])=>(
+              <div key={lbl} style={{background:"#0f172a",border:`1px solid ${cor}33`,borderRadius:14,padding:16}}>
+                <div style={{fontSize:20}}>{icon}</div>
+                <div style={{fontSize:28,fontWeight:900,color:cor,lineHeight:1,margin:"6px 0 4px"}}>{val}</div>
+                <div style={{fontSize:10,color:"#64748b",letterSpacing:0.5}}>{lbl}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"linear-gradient(135deg,#14532d22,#052e1622)",
+            border:"1px solid #22c55e33",borderRadius:14,padding:18}}>
+            <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:4}}>RECEITA FINALIZADA</div>
+            <div style={{fontSize:30,fontWeight:900,color:"#22c55e"}}>R$ {rel.receita.toLocaleString("pt-BR")}</div>
+          </div>
+          <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:14,padding:18}}>
+            <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:14}}>DESEMPENHO POR PESSOA</div>
+            <div style={{display:"flex",flexDirection:"column",gap:14}}>
+              {rel.porPessoa.map(e=>(
+                <div key={e.id}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <Av nome={e.nome} cor={e.cor} size={28}/>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{e.nome}</div>
+                        <div style={{fontSize:10,color:"#64748b"}}>{getP(e.perfil).icon} {e.funcao}</div>
+                      </div>
+                    </div>
+                    <span style={{fontSize:12,color:"#94a3b8",alignSelf:"center"}}>{e.fin} fin. / {e.total}</span>
+                  </div>
+                  <div style={{background:"#1e293b",borderRadius:6,height:8,overflow:"hidden"}}>
+                    <div style={{height:"100%",borderRadius:6,background:`linear-gradient(90deg,${e.cor},${e.cor}aa)`,
+                      width:`${e.total?Math.round((e.fin/e.total)*100):0}%`}}/>
+                  </div>
+                </div>
+              ))}
+              {rel.porPessoa.length===0&&<div style={{textAlign:"center",color:"#475569",fontSize:13}}>Sem dados ainda</div>}
+            </div>
+          </div>
+          <div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:14,padding:18}}>
+            <div style={{fontSize:10,color:"#64748b",letterSpacing:1,marginBottom:14}}>PIPELINE</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {STATUS_FLOW.map(s=>{
+                const c=obras.filter(o=>o.status===s.id).length;
+                return(
+                  <div key={s.id} style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:110,fontSize:11,color:"#64748b",flexShrink:0}}>{s.icon} {s.label}</div>
+                    <div style={{flex:1,background:"#1e293b",borderRadius:6,height:18,overflow:"hidden"}}>
+                      <div style={{height:"100%",background:s.color,borderRadius:6,
+                        width:`${obras.length?(c/obras.length)*100:0}%`,
+                        display:"flex",alignItems:"center",paddingLeft:c>0?6:0,
+                        fontSize:10,color:"#fff",fontWeight:700}}>{c>0?c:""}</div>
+                    </div>
+                    <div style={{width:18,fontSize:12,fontWeight:700,color:"#e2e8f0",textAlign:"right"}}>{c}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ABA EQUIPE */}
+      {aba==="equipe"&&p.gerenciar&&(
+        <div style={{padding:"14px 18px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:12,color:"#64748b"}}>{equipe.filter(e=>e.ativo).length} pessoas ativas · {equipe.length} total</div>
+            <button onClick={()=>setFuncSel("new")} style={{
+              background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",borderRadius:10,
+              color:"#fff",cursor:"pointer",padding:"8px 14px",fontSize:12,fontWeight:700}}>
+              + Adicionar Pessoa
+            </button>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {equipe.map(e=>(
+              <div key={e.id} onClick={()=>setFuncSel(e)} style={{
+                background:"#0f172a",border:"1px solid #1e293b",
+                borderLeft:`3px solid ${e.ativo?e.cor:"#334155"}`,
+                borderRadius:14,padding:14,cursor:"pointer",opacity:e.ativo?1:0.55,
+                display:"flex",alignItems:"center",gap:14}}>
+                <Av nome={e.nome} cor={e.cor} size={46}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:15,fontWeight:800,color:"#f1f5f9"}}>{e.nome}</div>
+                  <div style={{fontSize:12,color:"#64748b",marginTop:1}}>{e.funcao}</div>
+                  <div style={{fontSize:11,color:"#94a3b8",marginTop:3}}>
+                    {getP(e.perfil).icon} {getP(e.perfil).label}
+                    {e.telefone&&` · ${e.telefone}`}
+                  </div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+                  <span style={{fontSize:10,background:e.ativo?"#22c55e22":"#ef444422",
+                    color:e.ativo?"#22c55e":"#ef4444",border:`1px solid ${e.ativo?"#22c55e44":"#ef444444"}`,
+                    borderRadius:20,padding:"2px 8px",fontWeight:700}}>
+                    {e.ativo?"Ativo":"Inativo"}
+                  </span>
+                  <span style={{fontSize:10,color:"#475569"}}>
+                    {obras.filter(o=>o.responsavelId===e.id).length} obras
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Gerenciar Tipos de Serviço */}
+          <div style={{marginTop:24,background:"#0f172a",border:"1px solid #1e293b",borderRadius:16,padding:18}}>
+            <div style={{fontSize:12,color:"#64748b",letterSpacing:1,marginBottom:14}}>⚙️ TIPOS DE SERVIÇO</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+              {tipos.map((t,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:6,
+                  background:"#1e293b",borderRadius:20,padding:"5px 12px"}}>
+                  <span style={{fontSize:13,color:"#e2e8f0"}}>{t}</span>
+                  {tipos.length>1&&(
+                    <button onClick={()=>setTipos(prev=>prev.filter((_,idx)=>idx!==i))} style={{
+                      background:"transparent",border:"none",color:"#475569",
+                      cursor:"pointer",fontSize:12,padding:0,lineHeight:1}}>✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <input
+                id="novoTipoInput"
+                placeholder="Ex: Película, Guarda-corpo, Porta..."
+                style={{...inp,flex:1}}
+                onKeyDown={e=>{
+                  if(e.key==="Enter"&&e.target.value.trim()){
+                    setTipos(prev=>[...prev,e.target.value.trim()]);
+                    e.target.value="";
+                  }
+                }}/>
+              <button onClick={()=>{
+                const el=document.getElementById("novoTipoInput");
+                if(el&&el.value.trim()){setTipos(prev=>[...prev,el.value.trim()]);el.value="";}
+              }} style={{background:"linear-gradient(135deg,#f97316,#ea580c)",border:"none",
+                borderRadius:10,color:"#fff",cursor:"pointer",padding:"10px 16px",fontWeight:800,fontSize:15}}>+</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAIS */}
+      {obraSel&&<ModalObra obra={obraSel} onClose={()=>setObraSel(null)}
+        onUpdate={updateObra} onDelete={deleteObra} equipe={equipe} perfil={perfil}/>}
+      {modalNova&&<ModalNovaObra onClose={()=>setModalNova(false)}
+        onCreate={nova=>setObras(prev=>[nova,...prev])} equipe={equipe} tipos={tipos} setTipos={setTipos}/>}
+      {funcSel&&<ModalFunc func={funcSel==="new"?null:funcSel}
+        onClose={()=>setFuncSel(null)} onSave={saveFunc} onDelete={deleteFunc}/>}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<GTObras />);
+  </script>
+</body>
 </html>
